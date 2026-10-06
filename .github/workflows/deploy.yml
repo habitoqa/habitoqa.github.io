@@ -1,6 +1,6 @@
 name: Deploy
 
-# Publica en GitHub Pages solo cuando el CI de main terminó bien.
+# Publica en GitHub Pages el build que verificó el CI de main, sin volver a construirlo.
 on:
   workflow_run:
     workflows: [CI]
@@ -9,43 +9,46 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  build:
+  preparar:
+    name: Preparar el artefacto de Pages
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read # leer el artefacto de otra ejecución (la del CI)
     steps:
-      - uses: actions/checkout@v4
+      - name: Descargar el build verificado por el CI
+        uses: actions/download-artifact@v8
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          name: build
+          path: build
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
+      - uses: actions/configure-pages@v6
 
-      - run: npm ci
-      - run: npm run build
-
-      - uses: actions/configure-pages@v5
-
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: build
 
   deploy:
-    needs: build
+    name: Deploy a GitHub Pages
+    needs: preparar
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
