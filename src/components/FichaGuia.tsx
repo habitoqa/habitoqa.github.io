@@ -118,7 +118,7 @@ export default function FichaGuia(): ReactNode {
                     <a href={a.url} target="_blank" rel="noopener noreferrer">
                       {a.nombre}
                     </a>
-                    {a.aporta ? <span className="ubicacion">. {a.aporta}</span> : null}
+                    {a.aporta ? <span className="ubicacion">: {a.aporta}</span> : null}
                   </li>
                 ))}
               </ul>
