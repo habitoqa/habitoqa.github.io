@@ -1,0 +1,10 @@
+{
+  "label": "CI/CD y entornos de prueba",
+  "position": 3,
+  "link": {
+    "type": "generated-index",
+    "title": "CI/CD y entornos de prueba",
+    "description": "Pipelines, gates de calidad y entornos donde corren las pruebas.",
+    "slug": "/guias/cicd"
+  }
+}

@@ -1,0 +1,33 @@
+---
+title: GitHub Actions como gate de calidad
+description: Branch protection con required checks, tests inestables en el pipeline y lectura del reporte en un PR.
+area: cicd
+nivel: semi_senior
+celda: cicd.semi_senior
+comportamientos:
+  - cicd.semi_senior.1
+  - cicd.semi_senior.2
+respaldo:
+  mercado:
+    - {avisos: [A04, A13, A17, A22], seccion: "§7.2"}
+  libros:
+    - {recurso: cd, ubicacion: "cap. 5 (el pipeline de despliegue)"}
+alternativa_externa:
+  - {nombre: "Playwright, CI intro", url: "https://playwright.dev/docs/ci-intro", aporta: "required checks, retries frente a cuarentena, reporte en el PR"}
+fuentes:
+  - https://playwright.dev/docs/ci-intro
+  - https://playwright.dev/docs/test-sharding
+herramientas:
+  - {nombre: playwright, version: "1.xx"}
+  - {nombre: node, version: "22"}
+ultima_revision: 2026-10-05
+sidebar_position: 1
+---
+
+import BadgeCompetencia from '@site/src/components/BadgeCompetencia';
+
+<span className="rotulo">Esta guía cubre</span>
+
+<BadgeCompetencia area="cicd" nivel="semi_senior" />
+
+Contenido en preparación.

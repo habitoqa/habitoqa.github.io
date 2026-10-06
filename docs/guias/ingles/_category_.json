@@ -1,0 +1,10 @@
+{
+  "label": "Inglés técnico",
+  "position": 5,
+  "link": {
+    "type": "generated-index",
+    "title": "Inglés técnico",
+    "description": "El inglés que se usa en el trabajo de QA: defectos, PRs, refinamientos y avisos.",
+    "slug": "/guias/ingles"
+  }
+}
