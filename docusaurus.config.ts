@@ -98,11 +98,8 @@ const config: Config = {
     },
     footer: {
       style: 'dark',
+      // /autor vuelve al footer cuando el autor confirme el contenido de la página.
       links: [
-        {
-          title: 'Hábito QA',
-          items: [{label: 'Sobre el autor', to: '/autor'}],
-        },
         {
           title: 'Seguinos',
           items: [

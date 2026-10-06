@@ -7,12 +7,12 @@ sidebar_position: 1
 
 # Guías
 
-Las guías se organizan por área de la matriz, no por herramienta: Playwright, Cypress y Selenium conviven dentro de la misma área. Cada guía dice qué celda del [mapa de competencias](/mapa) cubre, en qué evidencia se apoya y termina en un ejercicio para probarlo.
+Las guías se organizan por área del [mapa de competencias](/mapa), no por herramienta: Playwright, Cypress y Selenium conviven dentro de la misma área. Cada guía dice qué celda del mapa cubre, en qué evidencia se apoya y termina en un ejercicio para probarlo.
 
-Todavía hay pocas. Estas son las primeras:
+Por ahora hay tres:
 
-- **Automatización de UI:** diagnosticar un test inestable con el Trace Viewer.
-- **CI/CD y entornos de prueba:** GitHub Actions como gate de calidad.
-- **Inglés técnico:** cómo redactar un defecto en inglés.
+- **Automatización de UI:** [Diagnosticar un test inestable con el Trace Viewer](/guias/ui/diagnosticar-un-test-inestable). Del síntoma a la causa en seis tipos de flakiness, con un test roto a propósito.
+- **CI/CD y entornos de prueba:** [GitHub Actions como gate de calidad](/guias/cicd/github-actions-como-gate). Required checks, retries frente a cuarentena y el reporte en el PR.
+- **Inglés técnico:** [Cómo redactar un defecto en inglés](/guias/ingles/como-redactar-un-defecto). Del reporte a la discusión de prioridad y la explicación de un test rojo.
 
 Si todavía no sabés por dónde empezar, hacé el [autodiagnóstico](/autodiagnostico): te dice qué área te conviene mirar primero.

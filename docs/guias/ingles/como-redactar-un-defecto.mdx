@@ -1,28 +1,290 @@
 ---
 title: Cómo redactar un defecto en inglés
-description: Estructura, vocabulario y ejemplos para reportar un defecto en inglés a nivel B2.
+description: Del bug report a la discusión de prioridad y la explicación de un test rojo en un PR, con las frases de un registro B2 y los errores típicos de quien piensa en español.
 area: ingles
-nivel: semi_senior
-celda: ingles.semi_senior
+nivel: senior                   # la celda principal es la de Senior, donde el mercado exige inglés; la sección del PR cubre una conducta de Semi Senior
+celda: ingles.senior
 comportamientos:
-  - ingles.semi_senior.3
+  - ingles.senior.3             # sección "Discutir la prioridad en el ticket"
+  - ingles.semi_senior.3        # sección "Explicar un test rojo en un PR"
 respaldo:
   mercado:
     - {avisos: [A01, A16, A17, A18, A20, A33, A46], seccion: "§7.4"}
-  libros: []
+  libros:
+    - {recurso: lessons, ubicacion: "cap. 4 (bug advocacy; resumen de fuentes públicas, no se usa como fuente única)"}
 alternativa_externa:
-  - {nombre: "freeCodeCamp, English for Developers", url: "https://www.freecodecamp.org/learn/english-for-developers/", aporta: "inglés general; no hay material para reportes de QA a nivel B2"}
+  - {nombre: "freeCodeCamp, English for Developers (B1)", url: "https://www.freecodecamp.org/espanol/learn/b1-english-for-developers/", aporta: "inglés general para desarrollo hasta B1; esta guía aporta la redacción de defectos y la discusión de prioridad en registro B2, que ahí casi no aparecen"}
 fuentes:
-  - https://www.freecodecamp.org/learn/english-for-developers/
+  - https://www.freecodecamp.org/espanol/learn/b1-english-for-developers/
+  - https://www.rfc-editor.org/rfc/rfc9110.html#name-422-unprocessable-content
 herramientas: []
 ultima_revision: 2026-10-05
-sidebar_position: 1
 ---
 
-import BadgeCompetencia from '@site/src/components/BadgeCompetencia';
+## El problema
 
-<span className="rotulo">Esta guía cubre</span>
+Encontrás un defecto en un entorno compartido con un equipo de otro país. Lo escribís en español, lo traducís con una herramienta y lo pegás en el ticket. Al día siguiente, alguien pregunta "Which button? On which page?" y el defecto se queda una jornada entera sin dueño por un malentendido de dos líneas. Después producto quiere bajarle la prioridad y tenés que sostenerla, o ceder, en inglés y por escrito.
 
-<BadgeCompetencia area="ingles" nivel="semi_senior" />
+El mercado ya lo pide. En el relevamiento de octubre de 2026, el inglés aparece de forma explícita en 7 de 8 avisos Senior de LATAM hispano (A01, A16, A17, A18, A20, A33 y A46), con niveles de B2 a C1. A46, de México, pide que los defectos se puedan leer "asynchronously by people who did not see your screen". Un reporte en inglés tiene que sostenerse solo.
 
-Contenido en preparación.
+Cubre tres textos: el reporte, la discusión de prioridad y la explicación de un test rojo en un PR.
+
+## La práctica
+
+### La estructura de un reporte que se lee solo
+
+Siempre en este orden. Quien lo lee decide en el título y en los dos primeros campos si es urgente.
+
+| Campo | Qué va | Ejemplo |
+|---|---|---|
+| Title | Qué falla, dónde y bajo qué condición | `Checkout: "Pay now" does nothing when the cart has a discounted item` |
+| Environment | Entorno, build, navegador o cliente, usuario de prueba | `Staging, build 2026.10.3, Chrome 130, user qa-buyer-02` |
+| Preconditions | Lo que tiene que estar listo antes | `Cart contains 1 item with a 10% coupon applied` |
+| Steps to reproduce | Imperativo, un paso por línea | `1. Open /checkout.` |
+| Expected result | Qué debería pasar | `The order is created and the confirmation page opens.` |
+| Actual result | Qué pasa | `The button stays enabled and the console shows a 500.` |
+| Frequency | Siempre, a veces, cuántas de cuántas | `Reproduced 5 out of 5 times.` |
+| Impact | Quién queda afectado y qué no puede hacer | `Buyers with coupons cannot complete a purchase.` |
+| Workaround | Si existe alguna salida | `Removing the coupon lets the purchase go through.` |
+| Started | Desde cuándo, o en qué build apareció | `Regression introduced in build 2026.10.3; works in 2026.10.2.` |
+| Attachments | Video, HAR, logs, trace, con su nombre | `checkout-500.mp4, network.har` |
+
+:::tip[Tip]
+Frequency y Started son los campos que más se omiten y los que más tiempo ahorran: "3 out of 10 times" y "works in 2026.10.2" cambian la conversación de "¿existe?" a "¿qué cambió?".
+:::
+
+### Repaso rápido de B1
+
+
+
+- **Después de `does` o `doesn't`, el verbo va en forma base.** `The filter doesn't works` es `The filter doesn't work`.
+- **`since` pide un punto en el tiempo y `for` una duración**, con presente perfecto. `It fails since three days` es `It has been failing for three days`, o `since Tuesday's release`.
+- **El sujeto no se omite.** `Is failing` es `It is failing`.
+
+### Registro B2: lo que separa un reporte correcto de uno profesional
+
+**Separá lo observado de lo inferido con hedging.** Lo que viste va en presente y sin adornos; lo que suponés lleva una marca que lo diga.
+
+| Observado | Inferido |
+|---|---|
+| The API returns a 500. | It seems to come from the discount service. |
+| The filter shows all rows. | This appears to be a regression introduced in build 2026.10.3. |
+
+Marcadores útiles: `seems to`, `appears to`, `might`, `as far as I can tell`, `my guess is`.
+
+**Matices que aparecen en todos los reportes:**
+
+- `intermittently`: `It fails intermittently, about 3 out of 10 runs.`
+- `regression introduced in`: `This looks like a regression introduced in 2026.10.3.`
+
+**Voz pasiva, cuando corresponde.** Los pasos van en imperativo (`Click Save.`). Los resultados suelen ir en pasiva porque quien actúa no importa o no se conoce: `The request is rejected with a 403.` `No confirmation email is sent.` `The order is not created.` Usá activa cuando el actor sí importa: `The service returns a 500.`
+
+### Falsos amigos
+
+| Palabra | Lo que querés decir | Escribí |
+|---|---|---|
+| actually | actualmente | currently, at the moment |
+| eventually | eventualmente, a veces | occasionally, intermittently |
+| to introduce (a value) | introducir un dato | to enter, to type |
+| evidences | las evidencias | the evidence, the attachments (`evidence` no se pluraliza; `test evidence` es correcto) |
+
+Cuidado con `eventually`: significa "al cabo de un tiempo, termina". `Eventually it fails` quiere decir "termina fallando", que no es lo mismo que "falla a veces".
+
+### Dos ejemplos completos
+
+#### Web
+
+Así no: `Bug in checkout. When I do click in pay button the system not respond and eventually show error. Is happening since yesterday. Please attach the evidences.`
+
+Así sí:
+
+```text
+Title: Checkout: "Pay now" does nothing when the cart has a discounted item
+
+Environment: Staging, build 2026.10.3, Chrome 130, user qa-buyer-02
+Preconditions: Cart contains 1 item with the coupon WELCOME10 applied.
+
+Steps to reproduce:
+1. Open /checkout.
+2. Fill in the shipping address with the saved test address.
+3. Click "Pay now".
+
+Expected result: The order is created and the confirmation page opens.
+Actual result: The button stays enabled and nothing happens. The browser
+console shows a 500 from POST /api/orders.
+
+Frequency: Reproduced 5 out of 5 times.
+Impact: Buyers who use a coupon cannot complete a purchase.
+Workaround: Removing the coupon lets the purchase go through.
+Started: Regression introduced in build 2026.10.3; I cannot reproduce it
+on 2026.10.2. It seems to come from the discount service, but I haven't
+confirmed it.
+Attachments: checkout-500.mp4, network.har
+```
+
+#### API
+
+Así no: `The endpoint orders return me 500 when the quantity is negative, should be validation. Is not working well, please see.`
+
+Así sí:
+
+```text
+Title: POST /api/v1/orders returns 500 instead of 422 when quantity is negative
+
+Environment: Staging, build 2026.10.3, API v1
+Request:
+  POST /api/v1/orders
+  Content-Type: application/json
+  {"productId": "P-1001", "quantity": -1}
+
+Expected result: 422 Unprocessable Content with a validation message
+for the "quantity" field.
+Actual result: 500 Internal Server Error. The response body is empty and
+an unhandled IllegalArgumentException is logged by the service.
+
+Frequency: Always. It also happens with quantity 0.
+Impact: Invalid input reaches the order service, and the client app shows
+a generic error instead of a validation message.
+Attachments: request.json, response.txt, service-log-excerpt.txt
+```
+
+En los dos "así sí", la urgencia sale del impacto y lo que es hipótesis dice que lo es. (422 se llamaba "Unprocessable Entity"; [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html#name-422-unprocessable-content) lo renombró.)
+
+### Discutir la prioridad en el ticket
+
+Un defecto tiene **severity** (cuánto daña al sistema) y **priority** (en qué orden se arregla, y eso lo decide el negocio). Producto suele discutir lo segundo, y vos aportás datos sobre lo primero. Un hilo típico:
+
+```text
+Product: Can we move this to P3? The coupon flow is a small share of orders.
+
+QA: I'd keep this as P1 for now, for two reasons. As of build 2026.10.3,
+every order with a coupon fails at payment, and coupons were applied to
+18% of orders last week (analytics dashboard). If we defer it, the Black
+Friday campaign goes out with a broken checkout. That said, I'm happy to
+move it to P2 if we ship a workaround, for example a banner asking users
+to remove the coupon. Could we agree on that by Thursday's planning?
+```
+
+Y si los datos cambian, se cede con una condición y por escrito: `Fair point. I can live with P3 as long as we revisit it on October 20. To confirm what we agreed: P3, workaround in the help center, review on October 20.`
+
+| Para | Frase |
+|---|---|
+| Sostener y mostrar la consecuencia | `I'd keep this as P1 because...` `If we defer it, ...` `The data suggests...` |
+| Ofrecer una salida | `I'm happy to move it to P2 if...` `Would a workaround work for you?` |
+| Ceder sin perder el hilo | `Fair point.` `I can live with P3 as long as...` `Let's revisit it on...` |
+| Cerrar por escrito | `To confirm what we agreed: ...` |
+
+:::warning[Ojo]
+Sostener una prioridad no es insistir. `This is critical, fix it urgently` repite la posición; `18% of orders last week` y `If we defer it, ...` le dan a la otra persona con qué decidir. Si no tenés el dato, decilo: `I don't have the numbers yet; I'll get them by tomorrow.`
+:::
+
+### Explicar un test rojo en un PR
+
+Cuando un check de CI falla, quien revisa el PR necesita tres cosas: si es culpa del cambio, qué falla y qué proponés.
+
+```text
+The e2e job is red: checkout.spec.ts fails at the "Pay now" click. I don't
+think it's flaky, because it fails on every run since this PR. It's caused
+by this change, not by the test: the button is now disabled until the
+address form is valid, and the test clicks it right after the page loads.
+In the trace, the click is retried until it times out.
+
+I suggest updating the test to fill in the address first; I've pushed
+that in 3f2a1c. If the old behavior is the intended one, the button logic
+needs to change instead. Could you confirm which one is expected?
+```
+
+| Para | Frase |
+|---|---|
+| Decir si es flaky | `I don't think it's flaky, because it fails on every run.` `This is not related to your change; it also failed on main in run #482.` |
+| Decir qué falla | `The test fails at step 3 because...` `The trace shows...` |
+| Proponer y pedir | `I suggest...` `Could you confirm which behavior is expected?` |
+
+:::note[En la práctica]
+Escribí en inglés tus tres últimos defectos y pedile a alguien que no conozca la funcionalidad que los reproduzca solo con el texto: cada pregunta que te haga es un campo que faltó.
+:::
+
+## Probalo así
+
+Tiempo estimado: 30 minutos. Reescribí este reporte y después respondé al mensaje de producto.
+
+```text
+Search filter
+The filter by date don't works in the report page, it show all the registers.
+Since the last release. Happen sometimes. I attach the evidences.
+Is critical, fix it urgently please.
+```
+
+Datos (inventalos, pero concretos): Staging, página `/reports`, filtro "Last 7 days", falla 2 de cada 5 veces solo con un filtro guardado, apareció en el build 2026.10.3.
+
+Después, producto escribe: `Can we make this P3? Only a few analysts use that page.` Respondé sosteniendo P1 con un dato y una consecuencia, o cediendo con una condición.
+
+Por último, el job e2e de un PR ajeno falla en `reports.spec.ts` porque el botón "Apply" ahora se llama "Apply filters". Escribí el comentario del PR: si es del cambio, qué falla y qué proponés.
+
+Resultado esperado: tu reporte tiene los campos de la tabla (Started puede ir vacío si no sabés el build), ningún `since` con una duración, ningún `eventually` y al menos una frase de hedging; tu respuesta tiene un dato, un `If we defer it, ...` y un cierre por escrito, y tu comentario del PR dice si es del cambio, qué falla y qué proponés.
+
+<details>
+<summary>Ver una solución</summary>
+
+```text
+Title: Reports: "Last 7 days" filter shows all records when a saved filter exists
+
+Environment: Staging, build 2026.10.3, Firefox 131, user qa-analyst-01
+Preconditions: The user has a saved filter on /reports (any value).
+
+Steps to reproduce:
+1. Open /reports.
+2. Select "Last 7 days" in the Date filter.
+3. Click "Apply".
+
+Expected result: Only records from the last 7 days are listed.
+Actual result: All records are listed (212 rows) and the filter chip
+still reads "Last 7 days".
+
+Frequency: Reproduced 2 out of 5 times. It only happens when a saved
+filter exists; with a clean session it works every time.
+Impact: Analysts see data outside the selected range and may export
+a wrong report.
+Workaround: Click "Reset filters" and apply the date filter again.
+Started: Regression introduced in build 2026.10.3; I cannot reproduce it
+on 2026.10.2. It seems to be related to how the saved filter is merged
+with the new one.
+Attachments: reports-filter.mp4, network.har
+```
+
+```text
+QA: I'd keep this as P1 for now. The page is used by the finance team
+at month end, and with this bug an export can contain rows outside the
+selected range. If we defer it, the October closing report could be
+wrong. I'm happy to move it to P2 if we add a warning banner until the
+fix ships. Could we decide that in today's triage?
+```
+
+Por qué funciona: la intermitencia quedó acotada a una condición, "critical" pasó a ser un impacto y la respuesta ofrece una consecuencia y una salida.
+
+```text
+The e2e job is red: reports.spec.ts fails at step 3, the click on "Apply".
+It's caused by this PR, not by flakiness: the button is now labeled
+"Apply filters", so the locator no longer matches. I suggest updating the
+test to use the new name; I've pushed that in 9c1e4d. Could you confirm
+the rename is intended?
+```
+
+</details>
+
+## Errores comunes
+
+:::danger[Error común]
+**Traducir el reporte entero de corrido.** Síntoma: el reporte suena a español con palabras en inglés ("the system not respond"). Causa: se traduce frase por frase, sin estructura. Arreglo: llená primero los campos de la tabla en inglés, con frases cortas, y recién después agregá notas.
+:::
+
+- **Adjetivos en lugar de impacto.** Síntoma: "critical", "urgent", "serious" sin datos, y producto que baja la prioridad. Causa: se confunde severidad con énfasis. Arreglo: quién queda afectado, cuántos y qué no pueden hacer.
+
+## Recursos
+
+- [freeCodeCamp, English for Developers (B1)](https://www.freecodecamp.org/espanol/learn/b1-english-for-developers/): inglés general para trabajo técnico, gratuito, hasta B1.
+- Kaner, Bach y Pettichord, *Lessons Learned in Software Testing*, cap. 4: cómo redactar un reporte para que se tome una decisión.
+
+## Qué sigue
+
+Dentro de la celda de Inglés Senior, lo que viene es presentar en inglés el estado de calidad de un release y escribir documentos largos de referencia (una estrategia de pruebas, un ADR, un postmortem). El paso siguiente en el mapa es la celda de Inglés Lead: definir las plantillas de defectos y de informes que usa todo el equipo, que son las de esta guía.
