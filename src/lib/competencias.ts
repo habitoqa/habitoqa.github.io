@@ -1,4 +1,4 @@
-import datos from '../data/competencias.json';
+import datos from '../data/competencias.cliente.json';
 import type {Area, Celda, Competencias, NivelId} from './tipos';
 
 export const competencias = datos as unknown as Competencias;

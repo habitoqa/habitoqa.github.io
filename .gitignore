@@ -25,3 +25,6 @@ yarn-error.log*
 /blob-report
 /playwright/.cache
 .env
+
+# Generado por scripts/recortar-competencias.mjs (postinstall y prebuild)
+/src/data/competencias.cliente.json

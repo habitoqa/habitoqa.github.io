@@ -3,7 +3,7 @@ import Layout from '@theme/Layout';
 import Heading from '@theme/Heading';
 import Link from '@docusaurus/Link';
 import useBrokenLinks from '@docusaurus/useBrokenLinks';
-import competencias from '@site/src/data/competencias.json';
+import competencias from '@site/src/data/competencias.cliente.json';
 import Ficha, {ETIQUETA_CATEGORIA} from '../components/Ficha';
 import Glifo from '../components/Glifo';
 import {estiloNivel} from '../components/BadgeNivel';

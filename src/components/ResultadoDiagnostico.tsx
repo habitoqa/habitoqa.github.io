@@ -5,25 +5,36 @@ import type {Diagnostico} from '../lib/diagnostico';
 
 interface Props {
   diagnostico: Diagnostico;
+  /** Vista de un resultado compartido: el texto le habla a quien mira, no a quien respondió. */
+  compartido?: boolean;
 }
 
 /** Resultado completo: recomendaciones en orden, mantenimiento y áreas sin datos. */
-export default function ResultadoDiagnostico({diagnostico}: Props): ReactNode {
+export default function ResultadoDiagnostico({diagnostico, compartido = false}: Props): ReactNode {
   const {recomendaciones, mantenimiento, sinDatos, objetivo, objetivoElegido} = diagnostico;
   const evaluadas = recomendaciones.length + mantenimiento.length;
   if (evaluadas === 0) {
     return (
       <p className="vacio">
-        Todavía no hay áreas con respuestas suficientes. Respondé al menos 2 preguntas de un área para ver tu resultado.
+        {compartido
+          ? 'Este resultado no trae respuestas suficientes en ninguna área para mostrar un nivel.'
+          : 'Todavía no hay áreas con respuestas suficientes. Respondé al menos 2 preguntas de un área para ver tu resultado.'}
       </p>
     );
   }
   return (
     <div className="resultado-completo">
       <p className="resumen-objetivo">
-        Orden por prioridad, apuntando a <strong>{nombreNivel(objetivo)}</strong>
-        {objetivoElegido ? ' (el objetivo que elegiste)' : ' (un nivel por encima de la mediana de tus áreas)'}.
-        Primero lo que más pide el mercado, después la distancia que te separa del objetivo.
+        {compartido ? 'Orden de prioridad, apuntando a ' : 'Orden por prioridad, apuntando a '}
+        <strong>{nombreNivel(objetivo)}</strong>
+        {objetivoElegido
+          ? compartido
+            ? ' (el objetivo que eligió quien respondió)'
+            : ' (el objetivo que elegiste)'
+          : compartido
+            ? ' (un nivel por encima de la mediana de sus áreas)'
+            : ' (un nivel por encima de la mediana de tus áreas)'}
+        . Primero lo que más pide el mercado, después la distancia al objetivo.
       </p>
 
       {recomendaciones.length > 0 && (

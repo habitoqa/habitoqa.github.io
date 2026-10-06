@@ -12,7 +12,13 @@
     "typecheck": "tsc",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "bloqueo": "node scripts/lista-de-bloqueo.mjs"
+    "bloqueo": "node scripts/lista-de-bloqueo.mjs",
+    "datos": "node scripts/recortar-competencias.mjs",
+    "postinstall": "node scripts/recortar-competencias.mjs",
+    "prebuild": "node scripts/recortar-competencias.mjs",
+    "prestart": "node scripts/recortar-competencias.mjs",
+    "validar": "node scripts/validar-competencias.mjs && node scripts/validar-guias.mjs",
+    "bloqueo:build": "node scripts/lista-de-bloqueo.mjs --build build"
   },
   "dependencies": {
     "@docusaurus/core": "3.10.2",
@@ -31,6 +37,7 @@
     "@playwright/test": "^1.63.0",
     "@types/node": "^20.19.43",
     "@types/react": "^19.0.0",
+    "gray-matter": "^4.0.3",
     "typescript": "~6.0.2",
     "vitest": "^3.2.7"
   },

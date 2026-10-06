@@ -27,7 +27,7 @@ export default function Registro(): ReactNode {
   const [filas, setFilas] = useState<Fila[] | null>(null);
 
   useEffect(() => {
-    const guardado = leerEstado(competencias);
+    const {estado: guardado} = leerEstado(competencias);
     if (!guardado) return;
     const d = diagnosticar(competencias, guardado.respuestas, guardado.objetivo);
     const propias = d.areas

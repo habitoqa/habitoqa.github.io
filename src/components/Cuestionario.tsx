@@ -73,16 +73,18 @@ export default function Cuestionario(): ReactNode {
   const [cargado, setCargado] = useState(false);
   const [areaActiva, setAreaActiva] = useState(competencias.areas[0].id);
   const [copiado, setCopiado] = useState(false);
+  const [versionAnterior, setVersionAnterior] = useState(false);
   const idObjetivo = useId();
   const urlResultado = useBaseUrl('/autodiagnostico/resultado');
 
   // Carga del estado guardado, una vez montado el componente (en el servidor no hay localStorage).
   useEffect(() => {
-    const guardado = leerEstado(competencias);
-    if (guardado) {
-      setRespuestas(guardado.respuestas);
-      setObjetivo(guardado.objetivo);
+    const {estado, versionAnterior: descartado} = leerEstado(competencias);
+    if (estado) {
+      setRespuestas(estado.respuestas);
+      setObjetivo(estado.objetivo);
     }
+    setVersionAnterior(descartado);
     setCargado(true);
   }, []);
 
@@ -128,7 +130,13 @@ export default function Cuestionario(): ReactNode {
   };
 
   return (
-    <div className="cuestionario">
+    <div className="cuestionario" data-listo={cargado ? 'true' : undefined}>
+      {versionAnterior && (
+        <p className="vacio" role="alert">
+          Tenías respuestas guardadas de una versión anterior del cuestionario. Las descartamos para no mezclarlas con las
+          preguntas de ahora: empezás de cero.
+        </p>
+      )}
       <div className="progreso-global">
         <p role="status" className="progreso-texto">
           Respondiste <strong>{respondidas}</strong> de {totalPreguntas} preguntas. Podés hacerlo por partes: lo que
@@ -167,8 +175,12 @@ export default function Cuestionario(): ReactNode {
                     <span className="area-nombre">{a.nombre}</span>
                     <span className="area-progreso">
                       {r?.nivel ? <Glifo nivel={r.nivel} /> : null}
-                      <span className="meta" aria-label={`${hechas} de ${a.diagnostico.length} respondidas`}>
+                      <span className="meta" aria-hidden="true">
                         {hechas}/{a.diagnostico.length}
+                      </span>
+                      <span className="sr-only">
+                        {r?.nivel ? `${nombreNivel(r.nivel)}, ` : ''}
+                        {hechas} de {a.diagnostico.length}
                       </span>
                     </span>
                   </button>

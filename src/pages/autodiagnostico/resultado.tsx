@@ -5,18 +5,18 @@ import Link from '@docusaurus/Link';
 import Head from '@docusaurus/Head';
 import ResultadoDiagnostico from '../../components/ResultadoDiagnostico';
 import {competencias} from '../../lib/competencias';
-import {leerQuery} from '../../lib/compartir';
+import {leerQuery, type LecturaQuery} from '../../lib/compartir';
 import {diagnosticar} from '../../lib/diagnostico';
 
 /** Resultado compartido: solo lectura, sin formulario y sin tocar el localStorage de quien lo abre. */
 export default function ResultadoCompartido(): ReactNode {
   // La query se lee después de montar: el HTML estático se genera sin ella y no debe diferir del primer render.
-  const [lectura, setLectura] = useState<ReturnType<typeof leerQuery> | 'pendiente'>('pendiente');
+  const [lectura, setLectura] = useState<LecturaQuery | 'pendiente'>('pendiente');
   useEffect(() => {
     setLectura(leerQuery(competencias, window.location.search));
   }, []);
   const diagnostico = useMemo(
-    () => (lectura && lectura !== 'pendiente' ? diagnosticar(competencias, lectura.respuestas, lectura.objetivo) : null),
+    () => (lectura !== 'pendiente' && lectura.ok ? diagnosticar(competencias, lectura.respuestas, lectura.objetivo) : null),
     [lectura],
   );
 
@@ -27,7 +27,7 @@ export default function ResultadoCompartido(): ReactNode {
       <Head>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
-      <main className="pagina envoltura">
+      <main className="pagina envoltura" data-listo={lectura !== 'pendiente' ? 'true' : undefined}>
         <header className="pagina-cab">
           <span className="rotulo">Resultado compartido</span>
           <h1>Un autodiagnóstico, en solo lectura</h1>
@@ -44,15 +44,20 @@ export default function ResultadoCompartido(): ReactNode {
         {diagnostico ? (
           <section aria-labelledby="resultado-compartido">
             <h2 id="resultado-compartido">Resultado</h2>
-            <ResultadoDiagnostico diagnostico={diagnostico} />
+            <ResultadoDiagnostico diagnostico={diagnostico} compartido />
           </section>
         ) : lectura === 'pendiente' ? (
           <p className="vacio" role="status">
             Cargando el resultado...
           </p>
+        ) : lectura.ok === false && lectura.motivo === 'version' ? (
+          <p className="vacio" role="alert">
+            Este link es de una versión anterior del cuestionario y las respuestas ya no coinciden con las preguntas
+            actuales, así que no se puede mostrar. Quien lo compartió puede generar uno nuevo.
+          </p>
         ) : (
           <p className="vacio" role="alert">
-            Este link no tiene un resultado válido. Puede estar cortado o ser de una versión anterior del cuestionario.
+            Este link no tiene un resultado válido. Puede estar cortado.
           </p>
         )}
       </main>

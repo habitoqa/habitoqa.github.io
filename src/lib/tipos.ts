@@ -6,7 +6,6 @@ export interface Nivel {
   id: NivelId;
   nombre: string;
   orden: number;
-  descripcion: string;
 }
 
 export interface Comportamiento {
@@ -21,12 +20,6 @@ export interface ItemMercado {
   conteo: string;
 }
 
-export interface Cita {
-  aviso: string;
-  contexto: string;
-  texto: string;
-}
-
 export interface UbicacionRecurso {
   recurso: string;
   ubicacion: string | null;
@@ -38,8 +31,6 @@ export interface Celda {
   evidencia: string;
   respaldo: {
     mercado: ItemMercado[];
-    citas: Cita[];
-    bibliografia: UbicacionRecurso[];
     nota?: string;
   };
   recursos: UbicacionRecurso[];
@@ -57,7 +48,6 @@ export interface Opcion {
 export interface Pregunta {
   id: string;
   enunciado: string;
-  tipo: string;
   opciones: Opcion[];
 }
 
@@ -73,22 +63,15 @@ export interface Area {
 export interface Recurso {
   id: string;
   titulo: string;
-  tipo: string;
-  idioma: string;
   url: string;
 }
 
 export interface Competencias {
-  esquema: string;
-  version: string;
   niveles: Nivel[];
-  categorias_mercado: Record<string, string>;
   recursos: Recurso[];
   areas: Area[];
   diagnostico: {
-    valores: Record<string, number>;
     minimo_respuestas_validas: number;
-    nivel_area: string;
     umbral_dispersion: number;
     peso_mercado: Record<string, number>;
   };

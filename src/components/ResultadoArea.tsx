@@ -57,8 +57,10 @@ export default function ResultadoArea({resultado, orden, encabezadoNivel = 'h3'}
 
         {resultado.desparejo && (
           <p className="aviso-desparejo">
-            En esta área hacés cosas de niveles distintos. Es frecuente y es información útil: empezá por las preguntas
-            que respondiste más abajo.
+            En esta área hacés cosas de niveles distintos. Es frecuente y es información útil.{' '}
+            {resultado.brechas.length > 0
+              ? 'Empezá por las preguntas que respondiste más abajo.'
+              : 'Tu nivel es el de la mayoría de tus respuestas, y lo más alto que hacés es un buen punto de apoyo para el paso siguiente.'}
           </p>
         )}
 
