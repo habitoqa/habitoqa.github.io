@@ -31,7 +31,8 @@ npm test                          # unitarios (vitest): algoritmo del diagnósti
 npm run build                     # los E2E corren contra el build
 npx playwright install chromium   # una sola vez
 npm run test:e2e                  # E2E (Playwright); levanta `docusaurus serve` solos
-npm run bloqueo -- build          # datos personales fuera de /autor: tiene que dar 0
+npm run bloqueo                   # datos personales en la fuente versionada: tiene que dar 0
+npm run bloqueo:build             # lo mismo sobre el build, sin excepciones
 ```
 
 El algoritmo del autodiagnóstico es un módulo puro (`src/lib/diagnostico.ts`) con sus tests al lado. Los E2E están en `e2e/` y usan `getByRole` y `getByLabel`, sin esperas fijas.
