@@ -12,9 +12,12 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: CI,
-  retries: CI ? 2 : 0,
+  // Un test que pasa solo al reintentar es un test inestable: se reintenta para tener el trace
+  // (on-first-retry) y igual falla el job, en lugar de taparlo.
+  retries: 2,
+  failOnFlakyTests: true,
   workers: CI ? 2 : undefined,
-  reporter: CI ? [['list'], ['html', {open: 'never'}]] : [['list'], ['html', {open: 'never'}]],
+  reporter: [['list'], ['html', {open: 'never'}]],
   use: {
     baseURL: `http://localhost:${PUERTO}`,
     trace: 'on-first-retry',

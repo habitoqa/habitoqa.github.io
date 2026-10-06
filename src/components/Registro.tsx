@@ -25,9 +25,11 @@ const EJEMPLO: Fila[] = [
 /** Tarjeta "Tu registro" de la portada: tu resultado guardado en este navegador o, si no hay, un ejemplo. */
 export default function Registro(): ReactNode {
   const [filas, setFilas] = useState<Fila[] | null>(null);
+  const [listo, setListo] = useState(false);
 
   useEffect(() => {
     const {estado: guardado} = leerEstado(competencias);
+    setListo(true);
     if (!guardado) return;
     const d = diagnosticar(competencias, guardado.respuestas, guardado.objetivo);
     const propias = d.areas
@@ -44,7 +46,7 @@ export default function Registro(): ReactNode {
   const lista = filas ?? EJEMPLO;
 
   return (
-    <aside className="registro" aria-label={esEjemplo ? 'Ejemplo de registro por área' : 'Tu registro por área'}>
+    <aside className="registro" data-listo={listo ? 'true' : undefined} aria-label={esEjemplo ? 'Ejemplo de registro por área' : 'Tu registro por área'}>
       <header>
         <span className="rotulo" style={{margin: 0}}>
           Tu registro

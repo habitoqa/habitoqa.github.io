@@ -1,4 +1,5 @@
 import {expect, test} from './fixtures';
+import {ancla, area, AREAS, celda, frontmatterGuia, GUIAS, nombreNivel, textoComportamiento} from './datos';
 
 test.describe('smoke', () => {
   test('la home muestra la propuesta, un solo CTA y el registro de ejemplo', async ({page}) => {
@@ -15,75 +16,101 @@ test.describe('smoke', () => {
     await autodiagnostico.abrir();
     await autodiagnostico.completarUi();
     await page.goto('/');
+    await expect(page.locator('.registro[data-listo="true"]')).toBeAttached();
     const registro = page.getByRole('complementary', {name: 'Tu registro por área'});
-    await expect(registro).toContainText('Automatización de UI');
-    await expect(registro).toContainText('Semi Senior');
+    await expect(registro).toContainText(area('ui').nombre);
+    await expect(registro).toContainText(nombreNivel('semi_senior'));
     await expect(registro).not.toContainText('Esto es un ejemplo.');
   });
 
   test('/mapa abre una celda por su ancla', async ({page}) => {
-    await page.goto('/mapa#ui-semi-senior');
-    const celda = page.getByRole('article', {name: 'Semi Senior'}).and(page.locator('#ui-semi-senior'));
-    await expect(celda).toBeVisible();
-    await expect(celda.getByRole('list', {name: 'Comportamientos observables'}).getByRole('listitem')).toHaveCount(3);
-    await expect(celda.getByText('Señal de evidencia', {exact: true}).first()).toBeVisible();
-    await expect(celda.getByText('Variante mobile')).toBeVisible();
-    await expect(page.locator('#seg-acc-lead')).toBeAttached();
+    const datos = celda('ui', 'semi_senior');
+    await page.goto(`/mapa#${ancla('ui', 'semi_senior')}`);
+    const ficha = page.getByRole('article', {name: nombreNivel('semi_senior')}).and(page.locator(`#${ancla('ui', 'semi_senior')}`));
+    await expect(ficha).toBeVisible();
+    await expect(ficha.getByRole('list', {name: 'Comportamientos observables'}).getByRole('listitem')).toHaveCount(datos.comportamientos.length);
+    await expect(ficha.getByText('Señal de evidencia', {exact: true}).first()).toBeVisible();
+    await expect(ficha.getByText('Variante mobile')).toBeVisible();
   });
 
-  test('la matriz enlaza a cada celda', async ({page}) => {
+  test('el mapa tiene una celda con ancla por cada área y nivel', async ({page}) => {
     await page.goto('/mapa');
-    await page.getByRole('link', {name: /^Testing de API e integración, Senior/}).click();
-    await expect(page).toHaveURL(/\/mapa#api-senior$/);
-    await expect(page.locator('#api-senior')).toBeInViewport();
-  });
-
-  test('el navbar tiene solo las cuatro entradas del MVP y el footer no tiene links personales', async ({page}) => {
-    await page.goto('/');
-    const navbar = page.getByRole('navigation', {name: 'Principal'});
-    // 5 links: el logo (con su texto alternativo) y las cuatro entradas del MVP
-    await expect(navbar.getByRole('link')).toHaveCount(5);
-    await expect(navbar.getByRole('link', {name: 'Hábito QA'})).toBeVisible();
-    await expect(navbar.locator('a.navbar__item')).toHaveText(['Inicio', 'Autodiagnóstico', 'Mapa', 'Guías']);
-
-    await navbar.getByRole('link', {name: 'Mapa'}).click();
-    await expect(page).toHaveURL(/\/mapa$/);
-    await navbar.getByRole('link', {name: 'Guías'}).click();
-    await expect(page.getByRole('heading', {level: 1, name: 'Guías'})).toBeVisible();
-
-    const footer = page.getByRole('contentinfo');
-    await expect(footer.getByRole('link', {name: 'Sobre el autor'})).toHaveAttribute('href', '/autor');
-    await expect(footer.getByRole('link', {name: 'Instagram'})).toHaveAttribute('href', 'https://instagram.com/habitoqa');
-    await expect(footer.getByRole('link', {name: 'GitHub'})).toHaveAttribute('href', 'https://github.com/habitoqa');
-    await expect(footer.getByRole('link')).toHaveCount(3);
-  });
-
-  test('/autor y las guías del MVP existen', async ({page}) => {
-    await page.goto('/autor');
-    await expect(page.getByRole('heading', {level: 1, name: 'Sobre el autor'})).toBeVisible();
-    await expect(page.getByText('Contenido en preparación.')).toBeVisible();
-    for (const ruta of [
-      '/guias/ui/diagnosticar-un-test-inestable',
-      '/guias/cicd/github-actions-como-gate',
-      '/guias/ingles/como-redactar-un-defecto',
-    ]) {
-      await page.goto(ruta);
-      await expect(page.getByRole('heading', {level: 1})).toBeVisible();
+    for (const a of AREAS) {
+      for (const c of a.celdas) {
+        await expect(page.locator(`#${ancla(a.id, c.nivel as never)}`)).toBeAttached();
+      }
     }
   });
 
-  test('el modo oscuro cambia el tema y se conserva al recargar', async ({page}) => {
+  test('la matriz enlaza a cada celda', async ({page}) => {
+    const api = area('api');
+    await page.goto('/mapa');
+    await page.getByRole('link', {name: new RegExp(`^${api.nombre}, ${nombreNivel('senior')}`)}).click();
+    await expect(page).toHaveURL(new RegExp(`/mapa#${ancla('api', 'senior')}$`));
+    await expect(page.locator(`#${ancla('api', 'senior')}`)).toBeInViewport();
+  });
+
+  test('el navbar tiene las cuatro entradas del MVP y el footer no tiene links personales ni al autor', async ({page}) => {
+    await page.goto('/');
+    const navbar = page.getByRole('navigation', {name: 'Principal'});
+    // el logo (con su texto alternativo) y las cuatro entradas del MVP
+    await expect(navbar.getByRole('link')).toHaveCount(5);
+    await expect(navbar.getByRole('link', {name: 'Hábito QA'})).toBeVisible();
+    for (const nombre of ['Inicio', 'Autodiagnóstico', 'Mapa', 'Guías']) {
+      await expect(navbar.getByRole('link', {name: nombre, exact: true})).toBeVisible();
+    }
+
+    await navbar.getByRole('link', {name: 'Mapa', exact: true}).click();
+    await expect(page).toHaveURL(/\/mapa$/);
+    await navbar.getByRole('link', {name: 'Guías', exact: true}).click();
+    await expect(page.getByRole('heading', {level: 1, name: 'Guías'})).toBeVisible();
+
+    const footer = page.getByRole('contentinfo');
+    await expect(footer.getByRole('link', {name: 'Instagram'})).toHaveAttribute('href', 'https://instagram.com/habitoqa');
+    await expect(footer.getByRole('link', {name: 'GitHub'})).toHaveAttribute('href', 'https://github.com/habitoqa');
+    await expect(footer.getByRole('link')).toHaveCount(2);
+  });
+
+  test('/autor no está publicada hasta que el autor confirme el contenido', async ({page}) => {
+    const respuesta = await page.goto('/autor');
+    expect(respuesta?.status()).toBe(404);
+    await expect(page.getByRole('heading', {level: 1})).toContainText(/no encontr/i);
+  });
+
+  for (const guia of GUIAS) {
+    test(`la ficha de ${guia.url} muestra los comportamientos de su frontmatter`, async ({page}) => {
+      const fm = frontmatterGuia(guia.ruta);
+      await page.goto(guia.url);
+      await expect(page.getByRole('heading', {level: 1, name: fm.title})).toBeVisible();
+      const ficha = page.getByRole('complementary', {name: 'Ficha de la guía'});
+      await expect(ficha).toBeVisible();
+      await expect(ficha.locator('.badge-competencia')).toContainText(area(fm.area).nombre);
+      await expect(ficha.locator('.badge-competencia')).toContainText(nombreNivel(fm.nivel));
+      const items = ficha.getByRole('list', {name: 'Comportamientos que cubre'}).getByRole('listitem');
+      await expect(items).toHaveCount(fm.comportamientos.length);
+      await expect(items).toHaveText(fm.comportamientos.map(textoComportamiento));
+      await expect(ficha.getByRole('link', {name: 'Ver la celda en el mapa'})).toHaveAttribute('href', `/mapa#${ancla(fm.area, fm.nivel)}`);
+    });
+  }
+
+  test('el modo oscuro cambia el tema, deja el navbar oscuro y se conserva al recargar', async ({page}) => {
     await page.goto('/');
     const html = page.locator('html');
-    await expect(html).toHaveAttribute('data-theme', 'light');
+    const fondo = () => page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor);
+    const fondoNavbar = () => page.evaluate(() => getComputedStyle(document.querySelector('nav.navbar')!).backgroundColor);
+    const claro = await fondo();
+    const navbarClaro = await fondoNavbar();
+
     const alternar = page.getByRole('button', {name: /Cambiar entre modo oscuro y claro/});
-    // El botón recorre sistema -> claro -> oscuro (respeta la preferencia del sistema al entrar).
+    // El botón recorre sistema -> claro -> oscuro (al entrar respeta la preferencia del sistema).
     await expect(html).toHaveAttribute('data-theme-choice', 'system');
     await alternar.click();
     await expect(html).toHaveAttribute('data-theme-choice', 'light');
     await alternar.click();
     await expect(html).toHaveAttribute('data-theme', 'dark');
-    await expect(page.getByRole('navigation', {name: 'Principal'})).toHaveCSS('background-color', 'rgb(23, 18, 31)');
+    expect(await fondo()).not.toBe(claro);
+    expect(await fondoNavbar()).toBe(navbarClaro);
+
     await page.reload();
     await expect(html).toHaveAttribute('data-theme', 'dark');
   });
