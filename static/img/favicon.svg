@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <rect width="64" height="64" rx="12" fill="#17121F"/>
+  <g transform="translate(4 4) scale(.875)">
+  <mask id="hq-fav-m" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64">
+    <rect width="64" height="64" fill="#fff"/>
+    <path d="M4 43L11 50L57 6" fill="none" stroke="#000" stroke-width="15.5" stroke-linecap="round" stroke-linejoin="round"/>
+  </mask>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="7.5">
+    <path d="M20 12V56M29 12V56M38 12V56M47 12V56" stroke="#EDE9F2" mask="url(#hq-fav-m)"/>
+    <path d="M4 43L11 50L57 6" stroke="#AE5BF6"/>
+  </g>
+  </g>
+</svg>

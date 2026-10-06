@@ -1,0 +1,249 @@
+/*
+ * Hábito QA: tokens de marca
+ * Fuente de los colores: marca/contraste.py (verificados WCAG AA, 103 pares, estados incluidos).
+ * Selectores verificados contra infima 0.2.0-alpha.42: el modo oscuro de Infima vive en
+ * html[data-theme='dark'] (especificidad 0,1,1), así que acá se redeclara con el mismo selector.
+ * Para la Fase 6: importar este archivo desde src/css/custom.css y borrar la paleta vieja.
+ *
+ * Fuentes (Google Fonts):
+ * <link rel="preconnect" href="https://fonts.googleapis.com">
+ * <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Atkinson+Hyperlegible+Next:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+ */
+
+:root {
+  /* ---------- Infima: primario derivado como lo hace Docusaurus (HSL L x 0.9 / 0.85 / 0.7 / 1.1 / 1.15 / 1.3) */
+  --ifm-color-primary: #802FC6;
+  --ifm-color-primary-dark: #732AB2;
+  --ifm-color-primary-darker: #6D28A8;
+  --ifm-color-primary-darkest: #5A218B;
+  --ifm-color-primary-light: #8C3DD1;
+  --ifm-color-primary-lighter: #9247D3;
+  --ifm-color-primary-lightest: #A464DA;
+
+  /* ---------- Superficies y texto */
+  --hq-papel: #FBFAF7;
+  --hq-superficie: #F3F0EA;
+  --hq-superficie-2: #E9E4DA;
+  --hq-linea: #D9D2C5;          /* decorativa: separadores, no controles */
+  --hq-linea-fuerte: #8C8496;   /* bordes de inputs, contornos de badges (3:1) */
+  --hq-tinta: #1C1823;
+  --hq-tinta-suave: #5B5466;
+
+  /* ---------- Marca */
+  --hq-primario: #802FC6;       /* links, botones, foco */
+  --hq-primario-tenue: #F1E6FC; /* fondo de selección, celda activa */
+  --hq-primario-hover: #732AB2;  /* = primary-dark */
+  --hq-primario-activo: #6D28A8; /* = primary-darker */
+  --hq-marca: #AE5BF6;          /* el violeta original: isotipo y acentos grandes, nunca texto chico en claro */
+
+  /* ---------- Semánticos (pass / fail) */
+  --hq-exito: #1B7A46;
+  --hq-exito-bg: #E5F3EA;
+  --hq-error: #B42318;
+  --hq-error-bg: #FBE8E5;
+  --hq-advertencia: #8A5300;
+  --hq-advertencia-bg: #FAEFD9;
+  --hq-info: #1D5FB0;
+  --hq-info-bg: #E4EDF9;
+
+  /* ---------- Niveles (rampa de claridad: Inicial -> Lead) */
+  --hq-nivel-inicial: #E6DAF5;
+  --hq-nivel-junior: #C7A6EE;
+  --hq-nivel-semi-senior: #A076C6;
+  --hq-nivel-senior: #6B2FAE;
+  --hq-nivel-lead: #3A1466;
+  --hq-nivel-inicial-texto: #1C1823;
+  --hq-nivel-junior-texto: #1C1823;
+  --hq-nivel-semi-senior-texto: #1C1823;
+  --hq-nivel-senior-texto: #FFFFFF;
+  --hq-nivel-lead-texto: #FFFFFF;
+  --hq-nivel-borde: var(--hq-linea-fuerte); /* contorno obligatorio de badges y barras de nivel */
+
+  /* ---------- Fijos en ambos modos: navbar, footer y código */
+  --hq-noche: #17121F;
+  --hq-noche-linea: #2E2639;
+  --hq-noche-tinta: #EDE9F2;
+  --hq-noche-tinta-suave: #A69DB4;
+  --hq-noche-acento: #C9A2FF;
+  --hq-code-keyword: #C9A2FF;
+  --hq-code-string: #8FD9A8;
+  --hq-code-function: #F2C879;
+  --hq-code-number: #FF9E80;
+  --hq-code-comment: #968DA5;
+  --hq-code-punct: #BDB5C9;
+  --hq-code-pass: #5BD08E;
+  --hq-code-fail: #FF8A7F;
+
+  /* ---------- Tipografía */
+  --hq-font-titulo: 'Bricolage Grotesque', 'Arial Narrow', system-ui, sans-serif;
+  --hq-font-texto: 'Atkinson Hyperlegible Next', 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --hq-font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  /* escala 1.25 (tercera mayor) sobre 17px */
+  --hq-fs-meta: 0.8125rem;   /* 13px, etiquetas mono en mayúsculas */
+  --hq-fs-chico: 0.9375rem;  /* 15px */
+  --hq-fs-base: 1.0625rem;   /* 17px, cuerpo */
+  --hq-fs-h4: 1.25rem;       /* 20px */
+  --hq-fs-h3: 1.5625rem;     /* 25px */
+  --hq-fs-h2: 1.9375rem;     /* 31px */
+  --hq-fs-h1: 2.4375rem;     /* 39px */
+  --hq-fs-display: clamp(2.5rem, 7vw, 4.75rem); /* portada */
+  --hq-lh-texto: 1.65;
+  --hq-lh-titulo: 1.08;
+  --hq-tracking-meta: 0.08em;
+
+  /* ---------- Forma */
+  --hq-trazo: 2px;            /* grosor de la marca de conteo en la UI */
+  --hq-radio: 4px;            /* esquinas casi rectas: cuaderno, no burbuja */
+  --hq-radio-chico: 2px;
+  --hq-espacio-1: 4px;
+  --hq-espacio-2: 8px;
+  --hq-espacio-3: 12px;
+  --hq-espacio-4: 16px;
+  --hq-espacio-5: 24px;
+  --hq-espacio-6: 32px;
+  --hq-espacio-7: 48px;
+  --hq-espacio-8: 72px;
+  --hq-ancho-lectura: 68ch;
+
+  /* ---------- Mapeo a Infima */
+  --ifm-background-color: var(--hq-papel);
+  --ifm-background-surface-color: var(--hq-superficie);
+  --ifm-font-color-base: var(--hq-tinta);
+  --ifm-color-content: var(--hq-tinta);
+  --ifm-color-content-secondary: var(--hq-tinta-suave);
+  --ifm-color-content-inverse: var(--hq-papel);
+  --ifm-color-emphasis-0: #FBFAF7;
+  --ifm-color-emphasis-100: #F3F0EA;
+  --ifm-color-emphasis-200: #E9E4DA;
+  --ifm-color-emphasis-300: #D9D2C5;
+  --ifm-color-emphasis-400: #B9B1BE;
+  --ifm-color-emphasis-500: #8C8496;
+  --ifm-color-emphasis-600: #5B5466;
+  --ifm-color-emphasis-700: #463F51;
+  --ifm-color-emphasis-800: #2E2838;
+  --ifm-color-emphasis-900: #1C1823;
+  --ifm-color-emphasis-1000: #0E0B12;
+  --ifm-hover-overlay: rgba(28, 24, 35, 0.05);
+  --ifm-table-stripe-background: rgba(28, 24, 35, 0.03);
+  --ifm-menu-color-background-active: var(--hq-primario-tenue);
+  --ifm-font-family-base: var(--hq-font-texto);
+  --ifm-heading-font-family: var(--hq-font-titulo);
+  --ifm-font-family-monospace: var(--hq-font-mono);
+  --ifm-font-size-base: 106.25%;
+  --ifm-line-height-base: var(--hq-lh-texto);
+  --ifm-heading-line-height: 1.15;
+  --ifm-heading-font-weight: 700;
+  --ifm-code-font-size: 90%;
+  --ifm-code-background: var(--hq-superficie-2);
+  --ifm-code-border-radius: var(--hq-radio-chico);
+  --ifm-global-radius: var(--hq-radio);
+  --ifm-toc-border-color: var(--hq-linea);
+  --ifm-hr-background-color: var(--hq-linea);
+  --ifm-navbar-background-color: var(--hq-noche);
+  --ifm-footer-background-color: var(--hq-noche);
+  --ifm-color-success: var(--hq-exito);
+  --ifm-color-danger: var(--hq-error);
+  --ifm-color-warning: var(--hq-advertencia);
+  --ifm-color-info: var(--hq-info);
+  --ifm-link-hover-decoration: underline;
+  --docusaurus-highlighted-code-line-bg: rgba(201, 162, 255, 0.12);
+}
+
+html[data-theme='dark'] {
+  --ifm-color-primary: #AE5BF6;
+  --ifm-color-primary-dark: #9E3BF4;
+  --ifm-color-primary-darker: #962BF3;
+  --ifm-color-primary-darkest: #7D0CE0;
+  --ifm-color-primary-light: #BE7BF8;
+  --ifm-color-primary-lighter: #C68BF9;
+  --ifm-color-primary-lightest: #DDBBFB;
+
+  --hq-papel: #141118;
+  --hq-superficie: #1D1922;
+  --hq-superficie-2: #28222F;
+  --hq-linea: #3A3344;
+  --hq-linea-fuerte: #7D7489;
+  --hq-tinta: #EDE9F2;
+  --hq-tinta-suave: #ABA3B8;
+
+  --hq-primario: #AE5BF6;
+  --hq-primario-tenue: #1E1728;
+  --hq-primario-hover: #BE7BF8;  /* en oscuro el hover aclara: primary-light (5,9:1 con texto noche) */
+  --hq-primario-activo: #C68BF9; /* primary-lighter */
+  --hq-marca: #AE5BF6;
+
+  --hq-exito: #5BD08E;
+  --hq-exito-bg: #12251A;
+  --hq-error: #FF8A7F;
+  --hq-error-bg: #2E1513;
+  --hq-advertencia: #EDB65A;
+  --hq-advertencia-bg: #2A1F0F;
+  --hq-info: #80B4FF;
+  --hq-info-bg: #121E31;
+
+  /* en oscuro la rampa se invierte en claridad: más nivel = más luz */
+  --hq-nivel-inicial: #352A43;
+  --hq-nivel-junior: #54407A;
+  --hq-nivel-semi-senior: #77609F;
+  --hq-nivel-senior: #B08DEB;
+  --hq-nivel-lead: #E2D2FF;
+  --hq-nivel-inicial-texto: #EDE9F2;
+  --hq-nivel-junior-texto: #EDE9F2;
+  --hq-nivel-semi-senior-texto: #FFFFFF;
+  --hq-nivel-senior-texto: #17121F;
+  --hq-nivel-lead-texto: #17121F;
+
+  /* Infima redeclara todo esto en html[data-theme='dark']: hay que pisarlo con el mismo selector */
+  --ifm-background-color: var(--hq-papel);
+  --ifm-background-surface-color: var(--hq-superficie);
+  --ifm-color-content: var(--hq-tinta);
+  --ifm-color-content-secondary: var(--hq-tinta-suave);
+  --ifm-color-content-inverse: var(--hq-noche);
+  --ifm-color-emphasis-0: #141118;
+  --ifm-color-emphasis-100: #1D1922;
+  --ifm-color-emphasis-200: #28222F;
+  --ifm-color-emphasis-300: #3A3344;
+  --ifm-color-emphasis-400: #554C61;
+  --ifm-color-emphasis-500: #7D7489;
+  --ifm-color-emphasis-600: #ABA3B8;
+  --ifm-color-emphasis-700: #C3BCCD;
+  --ifm-color-emphasis-800: #D8D2E0;
+  --ifm-color-emphasis-900: #EDE9F2;
+  --ifm-color-emphasis-1000: #FFFFFF;
+  --ifm-toc-border-color: var(--hq-linea);
+  --ifm-hr-background-color: var(--hq-linea);
+  --ifm-hover-overlay: rgba(237, 233, 242, 0.05);
+  --ifm-table-stripe-background: rgba(237, 233, 242, 0.04);
+  --ifm-menu-color-background-active: var(--hq-primario-tenue);
+  --ifm-code-background: var(--hq-superficie-2);
+  --docusaurus-highlighted-code-line-bg: rgba(201, 162, 255, 0.16);
+}
+
+/* ---------- Botón primario: estados (Infima usa -dark/-darker en hover/active) */
+.button--primary { --ifm-button-color: var(--hq-papel); }
+.button--primary:hover { --ifm-button-background-color: var(--hq-primario-hover); --ifm-button-border-color: var(--hq-primario-hover); }
+.button--primary:active,
+.button--primary.button--active { --ifm-button-background-color: var(--hq-primario-activo); --ifm-button-border-color: var(--hq-primario-activo); }
+html[data-theme='dark'] .button--primary { --ifm-button-color: var(--hq-noche); }
+
+/* ---------- Navbar y footer oscuros (docusaurus.config.js: navbar.style y footer.style = 'dark') */
+.navbar--dark {
+  --ifm-navbar-background-color: var(--hq-noche);
+  --ifm-navbar-link-color: var(--hq-noche-tinta);
+  --ifm-navbar-link-hover-color: var(--hq-noche-acento);
+  --ifm-menu-color: var(--hq-noche-tinta-suave);
+  --ifm-menu-color-active: var(--hq-noche-acento);
+  --ifm-menu-color-background-active: var(--hq-noche-linea);
+  --ifm-navbar-search-input-background-color: var(--hq-noche-linea);
+  --ifm-navbar-search-input-color: var(--hq-noche-tinta);
+  --ifm-navbar-search-input-placeholder-color: var(--hq-noche-tinta-suave);
+  border-bottom: 1px solid var(--hq-noche-linea);
+}
+.footer--dark {
+  --ifm-footer-background-color: var(--hq-noche);
+  --ifm-footer-color: var(--hq-noche-tinta-suave);
+  --ifm-footer-link-color: var(--hq-noche-tinta);
+  --ifm-footer-link-hover-color: var(--hq-noche-acento);
+  --ifm-footer-title-color: #FFFFFF;
+}
