@@ -9,7 +9,8 @@ Sitio de calidad de software para ver en qué nivel está un QA, qué le falta s
 - **Autodiagnóstico** (`/autodiagnostico`): 46 situaciones en 12 áreas. Corre 100 % en el navegador, guarda el avance en `localStorage` y genera un link compartible de solo lectura (`/autodiagnostico/resultado?r=...`, sin datos personales y con `noindex`).
 - **Mapa de competencias** (`/mapa`): matriz de 12 áreas por 5 niveles, con anclas `#<area>-<nivel>`. Sale de `src/data/competencias.json`, la única fuente de datos.
 - **Guías** (`docs/guias/`): contenido propio organizado por área, no por herramienta.
-- **Sobre el autor** (`/autor`): el único lugar con datos personales.
+
+La página /autor está fuera del sitio hasta que el autor confirme su contenido; cuando vuelva, es el único lugar con datos personales.
 
 ## Cómo correrlo
 
@@ -38,7 +39,7 @@ El algoritmo del autodiagnóstico es un módulo puro (`src/lib/diagnostico.ts`) 
 ## Estructura
 
 ```
-docs/            Guías y /autor (Markdown/MDX)
+docs/            Guías (Markdown/MDX)
 e2e/             Tests E2E con Playwright
 scripts/         Lista de bloqueo de datos personales
 src/components/  Glifo, BadgeNivel, BadgeCompetencia, Ficha, Callout y resultado del diagnóstico
