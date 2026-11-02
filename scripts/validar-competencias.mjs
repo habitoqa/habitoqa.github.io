@@ -11,6 +11,7 @@ import {dirname, join} from 'node:path';
 const raiz = join(dirname(fileURLToPath(import.meta.url)), '..');
 const NIVELES = ['inicial', 'junior', 'semi_senior', 'senior', 'lead'];
 const ID_COMPORTAMIENTO = /^[a-z_]+\.(inicial|junior|semi_senior|senior|lead)\.(?:[a-z]+\.)?\d+$/;
+const OPCION_DEPENDIENTE = /^(además|también|encima|incluso|lo mismo|igual que)\b|\b(lo anterior|además de eso)\b/i;
 
 export function validarCompetencias(d) {
   const errores = [];
@@ -106,6 +107,8 @@ export function validarCompetencias(d) {
         for (const x of o.slice(0, -2)) {
           if (!NIVELES.includes(x.nivel)) err(`${pc}: nivel de opción inválido ${JSON.stringify(x.nivel)}`);
           if (!texto(x.texto)) err(`${pc}: opción sin texto`);
+          // Cada opción describe un hábito completo: si depende de otra ("Además…"), empuja a elegirla.
+          else if (OPCION_DEPENDIENTE.test(x.texto)) err(`${pc}: la opción "${x.texto}" depende de otra; reescribila para que se lea sola`);
         }
       }
     }
