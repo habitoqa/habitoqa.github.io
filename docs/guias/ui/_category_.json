@@ -1,0 +1,10 @@
+{
+  "label": "Automatización de UI",
+  "position": 2,
+  "link": {
+    "type": "generated-index",
+    "title": "Automatización de UI",
+    "description": "Pruebas de punta a punta sobre la interfaz, web o mobile. Playwright es el ejemplo de referencia.",
+    "slug": "/guias/ui"
+  }
+}

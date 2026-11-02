@@ -1,0 +1,253 @@
+---
+title: GitHub Actions como gate de calidad
+description: Branch protection con required checks, qué hacer con un test inestable en el pipeline y cómo leer el reporte en un PR sin publicar datos sensibles.
+area: cicd
+nivel: semi_senior
+celda: cicd.semi_senior
+comportamientos:
+  - cicd.semi_senior.1
+  - cicd.semi_senior.3
+  - ui.semi_senior.3
+respaldo:
+  mercado:
+    - {avisos: [A04, A13, A16, A17, A20], seccion: "§7.2"}
+  libros:
+    - {recurso: cd, ubicacion: "cap. 3 (integración continua: el build roto se arregla primero) y cap. 5 (etapas del pipeline)"}
+alternativa_externa:
+  - {nombre: "Playwright, CI intro", url: "https://playwright.dev/docs/ci-intro", aporta: "el workflow básico y un aviso genérico sobre datos sensibles en traces; esta guía aporta required checks con job agregador, retries frente a cuarentena con criterio, lectura del reporte en el PR y la política concreta para los artefactos"}
+  - {nombre: "Playwright, Sharding", url: "https://playwright.dev/docs/test-sharding", aporta: "el reparto en shards; esta guía no lo repite"}
+fuentes:
+  - https://playwright.dev/docs/ci-intro
+  - https://playwright.dev/docs/test-sharding
+  - https://playwright.dev/docs/api/class-testconfig#test-config-fail-on-flaky-tests
+  - https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches
+herramientas:
+  - {nombre: playwright, version: "1.63"}
+  - {nombre: node, version: "22"}
+ultima_revision: 2026-10-05
+---
+
+## El problema
+
+Tenés una suite de Playwright que corre en cada PR. Está en verde casi siempre, y aun así un cambio roto llegó a `main` el viernes. Al revisar, el job había fallado, pero nadie lo miró y el botón de merge estaba habilitado. Otro día, el job falló por un test que "a veces falla", alguien lo relanzó hasta ponerlo en verde y el defecto real quedó tapado.
+
+Un pipeline que corre tests no es un gate. Un gate es el que decide si el cambio entra, y para eso hace falta configuración del repositorio, una política para los tests inestables y un reporte que se pueda leer sin descargar nada. El mercado lo pide: CI/CD aparece como requisito en 11 de 16 avisos de LATAM hispano (§7.2 del relevamiento de octubre de 2026).
+
+Lo básico (el workflow, instalar los navegadores, repartir en shards) está bien explicado por Playwright en [CI intro](https://playwright.dev/docs/ci-intro) y [Sharding](https://playwright.dev/docs/test-sharding). Esta guía arranca donde terminan.
+
+## La práctica
+
+### Un workflow mínimo
+
+Un job, sin shards, con los permisos recortados y el reporte siempre subido. Las versiones de las actions son las vigentes en octubre de 2026 (`checkout` v7, `setup-node` v7 y `upload-artifact` v7).
+
+```yaml title=".github/workflows/e2e.yml"
+name: e2e
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Los traces solo se generan en repos privados (ver más abajo)
+      ENABLE_TRACES: ${{ github.event.repository.private }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Run tests
+        run: npx playwright test --grep-invert @quarantine
+        env:
+          # El secreto solo existe en este paso, no en todo el job
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+```
+
+Decisiones: elegí `retention-days: 7` frente al valor por defecto porque el reporte sirve mientras el PR está abierto. El `timeout-minutes` evita que un test colgado consuma el plan del equipo. `concurrency` cancela la corrida vieja cuando subís otro commit al mismo PR, pero solo en PRs: en `main` cada commit se prueba completo. Si el repo tiene un entorno con secretos y aprobaciones, la alternativa a `secrets.*` suelto es declarar `environment:` en el job.
+
+Y la configuración que lo acompaña:
+
+```ts title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './tests',
+  fullyParallel: true,
+  forbidOnly: !!process.env.CI,
+  retries: process.env.CI ? 1 : 0,
+  failOnFlakyTests: !!process.env.CI,
+  workers: process.env.CI ? 2 : undefined,
+  reporter: process.env.CI
+    ? [['github'], ['html', { open: 'never' }]]
+    : [['list']],
+  use: {
+    trace: process.env.ENABLE_TRACES === 'true' ? 'on-first-retry' : 'off',
+  },
+});
+```
+
+El reporter `github` anota en el PR las líneas que fallan; el `html` queda como artefacto. `failOnFlakyTests` (en la CLI, `--fail-on-flaky-tests`) lo explico en la sección de tests inestables.
+
+### Que el resultado bloquee: required checks
+
+Un job en rojo no impide el merge si la rama no está protegida. En Settings, Branches (o Rulesets), creá una regla sobre `main` y activá:
+
+1. **Require a pull request before merging.**
+2. **Require status checks to pass before merging**, y elegí el check `e2e`. El nombre es el del job, no el del workflow.
+3. **Require branches to be up to date before merging**, para que el check corra sobre lo que realmente va a quedar en `main`.
+4. **Do not allow bypassing the above settings**, o el admin que "solo esta vez" salta el gate lo vacía.
+
+:::warning[Ojo]
+Tres trampas con los required checks. Un check solo aparece en la lista si corrió en la última semana, así que corré el workflow una vez antes de configurarlo. Un **workflow** que no se dispara por un filtro `paths` deja el check en "Expected" o en Pending y el PR no se puede mergear nunca. Y un **job** que se omite con `if:` reporta Success a los required checks: un gate puede quedar en verde sin haber corrido nada.
+:::
+
+### Job agregador para shards y matrix
+
+Cuando repartís en shards (lo básico, en [Sharding](https://playwright.dev/docs/test-sharding)), los nombres de los jobs pasan a incluir los valores de la matrix y ya no podés marcar uno solo como requerido. La solución es un job final que dependa de todos y sea el único check requerido:
+
+```yaml
+  gate:
+    if: ${{ always() }}
+    needs: [e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any test job did not succeed
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
+        run: exit 1
+```
+
+Dos detalles importan. Sin `always()`, si `e2e` falla el job `gate` se omite, y como un job omitido reporta Success, el required check queda en verde con los tests rotos. Y el `if` del paso falla también ante `skipped`, para que un shard omitido por error no pase en silencio. Marcá `gate` como required check en lugar de los shards.
+
+### Un test inestable en el pipeline: retries o cuarentena
+
+Los dos resuelven problemas distintos.
+
+- **`retries: 1`** es una red de seguridad contra un tropiezo aislado (un timeout de red del runner). Si el test pasa en el segundo intento, Playwright lo marca como *flaky*. Sin más configuración, el job termina en verde y el gate no te avisa. Con `failOnFlakyTests` (más abajo) el retry ya no salva el job: queda como evidencia, con el trace del primer retry y la clasificación del test como flaky.
+- **Cuarentena** saca el test del gate mientras se arregla, con un dueño y una fecha.
+
+El argumento de fondo es aritmético. Con un defecto real que hace fallar el test 1 de cada 3 veces, un retry lo deja pasar el 89 % de las veces (1 menos 1/3 al cuadrado) y tres retries, el 99 %. Cuantos más retries, menos probable es que el gate vea un defecto intermitente.
+
+La defensa real no es contar retries, sino hacer visible lo que pasó en el segundo intento: activá `failOnFlakyTests` en la config (o `--fail-on-flaky-tests` en la CLI; lo verifiqué en 1.63). Con esa opción, un test que falla y luego pasa deja el job en rojo, en lugar del verde silencioso. Mi criterio: un retry por corrida, `failOnFlakyTests` en CI, y una lista semanal de flaky. Si el mismo test aparece dos veces en una semana, entra en cuarentena. No lo dejes "para después".
+
+La cuarentena es una etiqueta más un ticket, no un `test.skip` mudo:
+
+```ts
+test('checkout aplica el cupón', {
+  tag: '@quarantine',
+  annotation: { type: 'issue', description: 'QA-482: el cupón usa la fecha del servidor' },
+}, async ({ page }) => {
+  // ...
+});
+```
+
+El job requerido corre con `--grep-invert @quarantine`. Un segundo job, no requerido, corre solo los etiquetados para que sigas viendo si el test se estabilizó:
+
+```yaml
+  quarantine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Run quarantined tests
+        run: npx playwright test --grep @quarantine --pass-with-no-tests
+        env:
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report-quarantine
+          path: playwright-report/
+          retention-days: 7
+```
+
+Dos aclaraciones. Si no hay ningún test etiquetado, Playwright termina con `Error: No tests found` y código de salida 1; `--pass-with-no-tests` (existe en 1.63) evita ese falso rojo. Y aun con `continue-on-error: true`, GitHub muestra el job con la cruz roja en el PR cuando un test en cuarentena falla, aunque el PR se pueda mergear: avisale al equipo que ese rojo no bloquea. Cada ticket de cuarentena lleva la causa escrita (la celda de UI Semi Senior lo pide así) y una fecha límite: pasada la fecha, se arregla o se borra.
+
+:::danger[Error común]
+Subir `retries` a 3 "para que deje de molestar". Síntoma: el job está siempre en verde y los defectos intermitentes llegan a producción. Causa: un defecto que se reproduce 1 de cada 3 veces pasa el 99 % de las veces con tres retries. Arreglo: un retry, `failOnFlakyTests` y una lista semanal de los tests que pasaron en el segundo intento.
+:::
+
+### Leer el reporte en un PR
+
+El orden que sigo cuando el check está rojo:
+
+1. En la pestaña Checks, abrí el job `e2e`. Las anotaciones del reporter `github` ya señalan archivo y línea.
+2. Si no alcanza, bajá el artefacto `playwright-report`, abrilo y filtrá por **Failed** y por **Flaky**. Un test flaky en este PR que no tocó esa área es una señal de la suite, no del cambio.
+3. Compará con el último run verde de `main`: si el mismo test falló ahí, el PR no es el culpable.
+4. Si hay trace, abrilo (para qué mirar en cada síntoma, ver la guía de diagnóstico con el Trace Viewer).
+
+### No publicar traces con datos sensibles
+
+La documentación de [CI intro](https://playwright.dev/docs/ci-intro) ya avisa, en forma genérica, de que los traces pueden contener datos sensibles. Lo que sigue es la verificación concreta y la política.
+
+Un trace guarda las requests de red, con sus headers y cuerpos. Lo comprobé con Playwright 1.63: un test que manda `Authorization: Bearer ...` deja ese valor en el archivo de red del `trace.zip`. También quedan los valores que escribís con `fill` (en el log de acciones y en los snapshots del DOM), así que una contraseña de prueba tipeada en un login queda a la vista. Y el reporte HTML copia los traces dentro de su carpeta `data/`: subir `playwright-report/` es subir los traces.
+
+En un repo público, los artefactos los puede descargar cualquier persona que tenga cuenta de GitHub. Un token de sesión de un usuario de prueba que apunte a un entorno real es una credencial publicada.
+
+Lo que hago:
+
+- Repo público: sin traces (`ENABLE_TRACES` queda en `false` porque el repo no es privado) y, si hace falta uno, se genera en local.
+- Usuarios de prueba que existen solo en el entorno de test, con contraseñas y tokens que se rotan.
+- Secretos por `secrets.*` (como `E2E_PASSWORD` en el workflow de arriba), nunca en el código ni en el YAML, y solo en el paso que los usa. Los PRs desde forks no reciben secretos: no te sorprendas si ahí fallan los tests que dependen de ellos.
+- Retención corta, y revisá capturas y videos: también muestran datos en pantalla.
+
+:::note[En la práctica]
+Un gate se prueba rompiéndolo. Si abrís un PR con un test roto a propósito y el botón de merge sigue habilitado, el gate todavía no existe.
+:::
+
+## Probalo así
+
+Tiempo estimado: 30 minutos, en un repo tuyo con una suite de Playwright.
+
+1. Copiá el workflow de arriba y mergealo a `main`.
+2. Corré el workflow una vez y configurá la regla de la rama con el check `e2e` (o `gate`, si agregaste el job agregador).
+3. Abrí un PR que cambie el texto de un botón sin actualizar el test. El job tiene que fallar y el merge tiene que quedar bloqueado.
+4. Escribí un test que falle solo en el primer intento (`expect(test.info().retry).toBe(1)`). Verificá que, sin `failOnFlakyTests`, el job queda en verde con el test marcado como flaky, y que con la opción queda en rojo.
+5. Etiquetalo `@quarantine` con un ticket, y verificá que el job requerido ya no lo corre.
+
+Resultado esperado: el paso 3 bloquea el merge, el paso 4 deja el job en rojo por `failOnFlakyTests` y el reporte lo marca como flaky, y el 5 devuelve el job a verde sin ese test.
+
+## Errores comunes
+
+- **El check requerido no aparece en la lista.** Causa: el workflow nunca corrió en esa rama en los últimos 7 días. Arreglo: correlo una vez y recargá la configuración.
+- **El PR queda en "Expected" para siempre.** Causa: un filtro `paths` o `branches` que no dispara el workflow. Arreglo: quitá el filtro del workflow requerido. Cuidado si omitís el job con `if:` (GitHub documenta ese patrón): un job omitido reporta Success, así que el riesgo está en que la condición sea incorrecta.
+- **El reporte pesa y nadie lo abre.** Causa: videos y traces de todos los tests. Arreglo: trace solo en el primer retry y video solo en fallos.
+- **El job está en verde con tests flaky.** Causa: retries sin `failOnFlakyTests`. Arreglo: activarlo, más lista semanal y cuarentena con fecha.
+- **El check agregador queda en verde con shards rotos.** Causa: falta `always()` en el job `gate`. Arreglo: `if: ${{ always() }}` y fallar si algún `needs.*.result` no es success.
+
+## Recursos
+
+- [Playwright, CI intro](https://playwright.dev/docs/ci-intro): el workflow base y cómo subir el reporte.
+- [Playwright, Sharding](https://playwright.dev/docs/test-sharding): repartir la suite en varios jobs y fusionar los reportes.
+- [GitHub Docs, branches protegidas](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches): el detalle de cada opción de la regla.
+- Humble y Farley, *Continuous Delivery*, cap. 3 y cap. 5: por qué un build roto se arregla antes que cualquier otra cosa y cómo se arman las etapas.
+
+## Qué sigue
+
+Cuando el gate bloquea, vas a empezar a ver tests inestables. La guía siguiente, "Diagnosticar un test inestable con el Trace Viewer", explica cómo encontrar la causa.

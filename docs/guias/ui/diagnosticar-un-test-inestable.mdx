@@ -1,0 +1,174 @@
+---
+title: Diagnosticar un test inestable con el Trace Viewer
+description: Un árbol de decisión para pasar del síntoma a la causa en seis tipos de flakiness, con lo que hay que mirar en el trace y el arreglo de cada uno.
+area: ui
+nivel: semi_senior
+celda: ui.semi_senior
+comportamientos:
+  - ui.semi_senior.2
+  - ui.semi_senior.3
+  - exploratorio.semi_senior.4
+respaldo:
+  mercado:
+    - {avisos: [A03, A10, A12], seccion: "§7.1"}   # respaldan la herramienta (Playwright con TypeScript), no el tema de la guía
+  # El respaldo del tema es la conducta ui.semi_senior.3 (diagnosticar con trace, video o logs) más Continuous Delivery cap. 8
+  libros:
+    - {recurso: xunit, ubicacion: "catálogo de olores, Fragile Test (sitio xunitpatterns.com; solo se usa el vocabulario)"}
+    - {recurso: cd, ubicacion: "cap. 8, pp. 187-224 (tests frágiles como costo)"}
+alternativa_externa:
+  - {nombre: "Playwright, Trace Viewer", url: "https://playwright.dev/docs/trace-viewer", aporta: "el uso de la herramienta; esta guía aporta el árbol de decisión de síntoma a causa y un test roto a propósito"}
+fuentes:
+  - https://playwright.dev/docs/trace-viewer
+  - https://playwright.dev/docs/actionability
+herramientas:
+  - {nombre: playwright, version: "1.63"}
+  - {nombre: node, version: "22"}
+ultima_revision: 2026-10-05
+---
+
+## El problema
+
+Un test pasa en tu máquina y falla en el pipeline una de cada cinco corridas. Alguien lo relanza, pasa, y el equipo concluye que "es flaky". Dos semanas después son siete tests, nadie confía en el rojo y los defectos reales se relanzan hasta que desaparecen.
+
+Un test inestable casi nunca es azar: tiene una causa, y el trace la deja a la vista si sabés qué buscar. Para abrirlo y recorrer sus pestañas, la [documentación del Trace Viewer](https://playwright.dev/docs/trace-viewer) es el lugar. Esta guía cubre lo que ahí no está: cómo ir del síntoma a la causa.
+
+## La práctica
+
+### Antes de abrir el trace: reproducí
+
+Un trace de un test que pasó no te dice nada. Primero forzá el fallo y capturá el trace de las corridas que fallan:
+
+```bash
+npx playwright test tests/pedidos.spec.ts --repeat-each=20 --trace retain-on-failure
+npx playwright show-trace test-results/<carpeta-del-fallo>/trace.zip
+```
+
+Si no falla ni con 20 repeticiones, probá con `--workers=1` (¿depende del orden?) y con más workers que núcleos (¿depende de otros tests?). Cómo falla bajo esas condiciones ya es el primer dato.
+
+Dónde mirar en el trace, siempre en este orden: la lista de acciones de la izquierda (¿en qué acción cae?), la pestaña Errors, el snapshot **Before** de esa acción (¿qué había en pantalla?), y recién después Log, Network y Console.
+
+### El árbol de decisión
+
+| Síntoma | Causa probable | Qué mirar en el trace | Arreglo |
+|---|---|---|---|
+| Falla porque "no encuentra" o "no coincide", pero el dato aparece unos instantes después | **Espera**: una lectura puntual (`count()`, `isVisible()`, `textContent()`) corrió antes de que la UI terminara | La acción `Query count` devuelve 0 y su snapshot After muestra la lista vacía; el fetch en Network termina después | Una aserción con auto-wait: `await expect(locator).toHaveCount(n)` |
+| Falla solo con varios workers, o pasa sola y falla en la suite. Mensajes como "already exists" o 409 | **Datos compartidos**: dos tests usan el mismo usuario, registro o carrito | Network: la respuesta con 409 o con datos que tu test no creó. Snapshot: el registro de otro test | Datos únicos por test (nombre con un sufijo propio) y fixture que los crea y los limpia |
+| Pasa en la suite completa y falla al correr solo, o al revés | **Orden**: el test depende de que otro haya corrido antes | El primer paso del test falla por un estado que nadie preparó (por ejemplo, ya hay sesión o no la hay) | Que cada test prepare su estado. Si necesitás un flujo en serie, declaralo con `test.describe.configure({ mode: 'serial' })` |
+| El click no hace nada o cae en otro elemento. Timeout en una acción | **Animación u overlay**: un modal, un toast o una transición cubre el elemento | Pestaña Log de la acción: `element is not stable` o `<div> intercepts pointer events`. Snapshot Before: el overlay | Esperar a que el overlay desaparezca con una aserción. Sin `force: true`. Si es una animación, `reducedMotion: 'reduce'` en `use` |
+| Falla en tiempos distintos cada vez, a veces con un 5xx | **Red**: respuesta lenta, caída o de un servicio de terceros | Network: duración de la request y estado. Console: errores de la app | Esperar la respuesta concreta (`page.waitForResponse`) o simular el tercero con `page.route`. Nunca un `waitForTimeout` |
+| Pasa en local y falla en CI, casi siempre igual | **Entorno**: viewport, zona horaria, idioma, CPU lenta, datos distintos | Pestaña Metadata: navegador, viewport y duración. Snapshot: layout distinto (menú colapsado, fecha corrida) | Fijar `viewport`, `timezoneId` y `locale` en la config, y correr en CI con el mismo contenedor que en local |
+
+:::tip[Tip]
+Si el síntoma es tan impreciso que no sabés a qué fila ir, empezá por la última acción antes del error y preguntate qué estaba cambiando en la página en ese momento. Casi siempre es una espera o una red.
+:::
+
+### Las causas, con un ejemplo
+
+**Esperas.** Es la más común. Playwright espera a que un elemento sea accionable antes de un click, pero no espera nada en `count()`: devuelve lo que hay en ese instante.
+
+```ts
+// Frágil: lee la cantidad una sola vez
+await page.getByRole('button', { name: 'Cargar pedidos' }).click();
+const filas = await page.getByRole('listitem').count();
+expect(filas).toBe(2);
+
+// Estable: la aserción reintenta hasta que se cumple o vence el timeout
+await page.getByRole('button', { name: 'Cargar pedidos' }).click();
+await expect(page.getByRole('listitem')).toHaveCount(2);
+```
+
+**Datos compartidos.** Un sufijo basta para que dos workers no se pisen:
+
+```ts
+const email = `qa+${test.info().workerIndex}-${Date.now()}@example.com`;
+```
+
+**Orden.** Si un test necesita que otro corra antes, no es un test: es un paso. Movelo a un `beforeEach` o a un fixture.
+
+**Animaciones.** `force: true` salta la comprobación de actionability, y por eso un click puede caer sobre un overlay y no fallar donde corresponde. El arreglo real es quitar `force`: el click normal reintenta mientras algo intercepta el puntero. (Un `toBeHidden()` solo sirve si el overlay ya estaba visible al aserto; con una promo que aparece más tarde pasaría al instante.) Las comprobaciones que hace antes de cada acción están en la [documentación de actionability](https://playwright.dev/docs/actionability).
+
+**Red y entorno.** Los dos se resuelven quitando la variable: o esperás la respuesta concreta, o simulás el servicio externo, o fijás el viewport y la zona horaria para que local y CI sean iguales.
+
+:::warning[Ojo]
+Un `waitForTimeout(2000)` no arregla ninguna de estas causas: la oculta en tu máquina y reaparece en un CI más lento. Si lo ves en un test, buscá qué evento esperaba esa pausa.
+:::
+
+## Probalo así
+
+Tiempo estimado: 25 minutos. El test siguiente es inestable a propósito, con dos causas distintas: una espera sobre una API que responde en tiempos variables y un click forzado sobre una promo que aparece y desaparece en momentos aleatorios. No necesita una app: sirve su propia página con `page.route`.
+
+```ts title="tests/practica.spec.ts"
+import { test, expect } from '@playwright/test';
+
+const pagina = `
+<button id="pagar">Pagar</button>
+<p id="estado" role="status"></p>
+<button id="cargar">Cargar pedidos</button>
+<ul id="lista"></ul>
+<div id="promo" hidden style="position:fixed;inset:0;background:#fff8">Promo del día</div>
+<script>
+  const aparece = 100 + Math.random() * 500;
+  setTimeout(() => document.getElementById('promo').hidden = false, aparece);
+  setTimeout(() => document.getElementById('promo').hidden = true, aparece + 300);
+  document.getElementById('pagar').onclick = () => {
+    document.getElementById('estado').textContent = 'Pago realizado';
+  };
+  document.getElementById('cargar').onclick = async () => {
+    const r = await fetch('/api/pedidos');
+    const datos = await r.json();
+    document.getElementById('lista').innerHTML =
+      datos.map(p => '<li>' + p + '</li>').join('');
+  };
+</script>`;
+
+test.beforeEach(async ({ page }) => {
+  await page.route('**/api/pedidos', async (route) => {
+    await new Promise((r) => setTimeout(r, Math.random() * 10));
+    await route.fulfill({ json: ['Pedido 1', 'Pedido 2'] });
+  });
+  await page.route('http://app.local/', (route) =>
+    route.fulfill({ contentType: 'text/html', body: pagina }));
+  await page.goto('http://app.local/');
+});
+
+test('lista los pedidos', async ({ page }) => {
+  await page.getByRole('button', { name: 'Cargar pedidos' }).click();
+  const filas = await page.getByRole('listitem').count();
+  expect(filas).toBe(2);
+});
+
+test('paga', async ({ page }) => {
+  await page.getByRole('button', { name: 'Pagar' }).click({ force: true });
+  await expect(page.getByRole('status')).toHaveText('Pago realizado');
+});
+```
+
+1. Corré `npx playwright test --repeat-each=40 --retries=0 --trace on` y anotá cuántas repeticiones de cada test fallan.
+2. Abrí el trace de un `paga` fallido y ubicá la causa con la tabla. ¿Qué había en el snapshot Before del click?
+3. Abrí el de un `lista los pedidos` fallido. ¿Qué mostraba el snapshot después del click y qué mostraba Network sobre el fetch?
+4. Corregí los dos tests con lo que dice el árbol, sin `waitForTimeout`.
+5. Repetí el paso 1.
+
+Resultado esperado: antes del arreglo, los dos tests fallan en una parte de las repeticiones, no en todas; después, los 80 pasan. Lo probé con Playwright 1.63 en Chromium, con `--repeat-each=40`: `lista los pedidos` falló 17 de 40 veces (42 %) y `paga`, 10 de 40 (25 %); tras el arreglo pasaron 40 de 40 en cada uno. La proporción cambia entre máquinas, y esa variación es lo que define a un test inestable. En el trace de un `lista los pedidos` fallido, Network muestra el fetch a `/api/pedidos` con su duración, que es lo que el `count()` no esperó.
+
+:::note[En la práctica]
+Tomá el test flaky que más veces relanzaste este mes, correlo con `--repeat-each=20 --trace retain-on-failure` y ubicá su fila en la tabla antes de tocarlo. Escribí la causa en el ticket: es lo que la celda de UI Semi Senior pide.
+:::
+
+## Errores comunes
+
+- **Subir el timeout.** Síntoma: el test deja de fallar y la suite tarda el doble. Causa: se trata la lentitud como si fuera la causa. Arreglo: buscá la condición que se espera y esperala con una aserción.
+- **Reintentar hasta que pase.** Síntoma: la suite está en verde con tests marcados como flaky. Causa: los retries ocultan la falla. Arreglo: los retries son una red de seguridad, no un diagnóstico; los flaky se revisan cada semana.
+- **Mirar el trace de una corrida que pasó.** Síntoma: el trace se ve perfecto. Causa: capturaste el trace de la corrida buena. Arreglo: `--trace retain-on-failure` con `--repeat-each` hasta tener un fallo.
+- **Culpar al navegador.** Síntoma: "solo falla en Firefox". Causa: casi siempre, una espera que en otro motor tarda un poco más. Arreglo: aplicá la misma tabla; el motor cambia la probabilidad, no la causa.
+
+## Recursos
+
+- [Playwright, Trace Viewer](https://playwright.dev/docs/trace-viewer): las pestañas y cómo abrir un trace, incluso uno bajado de CI.
+- [Playwright, Actionability](https://playwright.dev/docs/actionability): qué comprueba Playwright antes de cada acción.
+- Meszaros, *xUnit Test Patterns*, catálogo de olores, "Fragile Test" ([xunitpatterns.com](http://xunitpatterns.com/)): el vocabulario para nombrar la fragilidad.
+- Humble y Farley, *Continuous Delivery*, cap. 8: por qué un test frágil es un costo y no un activo.
+
+## Qué sigue
+
+Si el diagnóstico apunta al pipeline (retries, cuarentena, qué bloquea un PR), la guía anterior de la ruta es "GitHub Actions como gate de calidad". La celda siguiente en el mapa es UI Senior: separar los tests de negocio de la capa que maneja la UI.
