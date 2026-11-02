@@ -744,7 +744,7 @@
               "nivel": "semi_senior"
             },
             {
-              "texto": "Además busco si el mismo patrón afecta a otros tests y cambio el framework para que no se repita.",
+              "texto": "Busco si la misma causa afecta a otros tests y la corrijo en el framework, no test por test.",
               "nivel": "senior"
             },
             {
@@ -1582,7 +1582,7 @@
               "nivel": "inicial"
             },
             {
-              "texto": "Pruebo también casos negativos: campos faltantes, tipos inválidos, sin autenticación.",
+              "texto": "Pruebo el caso feliz y los negativos: campos faltantes, tipos inválidos, sin autenticación.",
               "nivel": "junior"
             },
             {
@@ -2046,7 +2046,7 @@
               "nivel": "semi_senior"
             },
             {
-              "texto": "Además entiende el impacto y puede priorizarlo sin hablar conmigo.",
+              "texto": "Lo reproduce y entiende el impacto como para priorizarlo sin hablar conmigo.",
               "nivel": "senior"
             },
             {
@@ -4060,7 +4060,7 @@
               "nivel": "semi_senior"
             },
             {
-              "texto": "Además analizo estados y secuencias del sistema para entender la causa de fondo.",
+              "texto": "Analizo estados y secuencias del sistema (logs, eventos, datos) hasta encontrar la causa de fondo.",
               "nivel": "senior"
             },
             {
@@ -4416,7 +4416,7 @@
               "nivel": "junior"
             },
             {
-              "texto": "Además reviso que no tenga olores (test gigante, invitado misterioso, aserciones de más).",
+              "texto": "Reviso que no tenga olores: test gigante, invitado misterioso, aserciones de más.",
               "nivel": "semi_senior"
             },
             {
@@ -4861,7 +4861,7 @@
               "nivel": "semi_senior"
             },
             {
-              "texto": "Además hay pruebas de capacidad planificadas por release.",
+              "texto": "Hay una prueba corta en el pipeline y pruebas de capacidad planificadas por release.",
               "nivel": "senior"
             },
             {

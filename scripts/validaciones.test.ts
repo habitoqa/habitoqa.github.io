@@ -26,6 +26,15 @@ describe('validar-competencias', () => {
     expect(e).toContain('tienen que ser 5');
     expect(e).toContain('"No aplica"');
   });
+
+  it('rechaza opciones que dependen de otra ("Además…") y acepta "también" dentro de la frase', () => {
+    const d = real();
+    d.areas[0].diagnostico[1].opciones[3].texto = 'Además busco si el patrón se repite.';
+    d.areas[0].diagnostico[1].opciones[2].texto = 'Lo reporto y pruebo si pasa también por la API.';
+    const e = validarCompetencias(d);
+    expect(e).toHaveLength(1);
+    expect(e[0]).toContain('depende de otra');
+  });
 });
 
 describe('validar-guias', () => {
